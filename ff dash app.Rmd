@@ -1,0 +1,306 @@
+---
+title: "Forest Fire Dashboard"
+output: html_document
+runtime: shiny
+resource_files:
+- app.R
+---
+
+```{r load_data, echo=FALSE}
+load("dash.RData")
+```
+
+```{r tabsets, echo=FALSE}
+library(rsconnect)
+
+library(shiny) 
+library(shinythemes) 
+library(data.table) 
+library(leaflet) 
+library(magrittr)
+
+mp = function(dt, grp, long, lat, cop){
+  if(dt == "Malaysia (2020)") {
+    
+    f = myl[between(myl[, 1], long+lat, long+lat), 2]
+    
+    b = c(0, 8, 98, 119)
+    
+  } else if(dt == "Indonesia (2020)") {
+    lt = switch(
+      grp, 
+      "Borneo" = borl0,
+      "Java" = jawl0,
+      "Maluku" = mall0,
+      "Lesser Sunda Islands" = ntl0,
+      "Sulawesi" = sull0,
+      "Sumatra" = suml0,
+      "Western New Guinea" = wngl0
+    )
+    
+    f = lt[between(lt[, 1], long+lat, long+lat), cop]
+    
+    b = switch(
+      grp,
+      "Borneo" = c(-4, 5, 108, 119),
+      "Java" = c(-9, -6, 105, 115),
+      "Maluku" = c(-8, 4, 123, 136),
+      "Lesser Sunda Islands" = c(-11, -8, 114, 130),
+      "Sulawesi" = c(-6, 3, 118, 126),
+      "Sumatra" = c(-6, 6, 94, 110),
+      "Western New Guinea" = c(-9, 0, 130, 141)
+    )
+    
+  } else {
+    lt = switch(
+      grp, 
+      "Borneo" = borl1,
+      "Java" = jawl1,
+      "Maluku" = mall1,
+      "Lesser Sunda Islands" = ntl1,
+      "Sulawesi" = sull1,
+      "Sumatra" = suml1,
+      "Western New Guinea" = wngl1
+    )
+    
+    f = lt[between(lt[, 1], long+lat, long+lat), cop]
+    
+    b = switch(
+      grp,
+      "Borneo" = c(-4, 5, 108, 119),
+      "Java" = c(-9, -6, 105, 115),
+      "Maluku" = c(-8, 4, 123, 136),
+      "Lesser Sunda Islands" = c(-11, -8, 114, 130),
+      "Sulawesi" = c(-6, 3, 118, 126),
+      "Sumatra" = c(-6, 6, 94, 110),
+      "Western New Guinea" = c(-9, 0, 130, 141)
+    )
+  }
+  
+  dt %>%
+    leaflet() %>%
+    addTiles() %>%
+    addCircles(lat = lat, lng = long, radius = 55596.5, 
+               color = "red", fillOpacity = f) %>%
+    addMarkers(lat = lat, lng = long) %>%
+    fitBounds(lat1 = b[1], lat2 = b[2], lng1 = b[3], lng2 = b[4])
+}
+pv = function(dt, grp, c, cop){
+  if(dt == "Malaysia (2020)") {
+    
+    par = my
+    
+  } else if(dt == "Indonesia (2020)") {
+    
+    par = switch(
+      grp, 
+      "Borneo" = bor0,
+      "Java" = jawa0,
+      "Maluku" = malu0,
+      "Lesser Sunda Islands" = nt0,
+      "Sulawesi" = sul0,
+      "Sumatra" = sum0,
+      "Western New Guinea" = wng0
+    )
+    
+  } else {
+    par = switch(
+      grp, 
+      "Borneo" = bor1,
+      "Java" = jawa1,
+      "Maluku" = malu1,
+      "Lesser Sunda Islands" = nt1,
+      "Sulawesi" = sul1,
+      "Sumatra" = sum1,
+      "Western New Guinea" = wng1
+    )
+  }
+  
+  par = format(round(par, 5))[cop]
+  
+  paste(c, "copula parameter:", par)
+}
+ct = function(dt, grp, cop, thres){
+  if(dt == "Malaysia (2020)") {
+    
+    et = mye
+    lt = myl
+    ut = myu
+    
+  } else if(dt == "Indonesia (2020)") {
+    et = switch(
+      grp, 
+      "Borneo" = bore0,
+      "Java" = jawe0,
+      "Maluku" = male0,
+      "Lesser Sunda Islands" = nte0,
+      "Sulawesi" = sule0,
+      "Sumatra" = sume0,
+      "Western New Guinea" = wnge0
+    )
+    
+    lt = switch(
+      grp, 
+      "Borneo" = borl0,
+      "Java" = jawl0,
+      "Maluku" = mall0,
+      "Lesser Sunda Islands" = ntl0,
+      "Sulawesi" = sull0,
+      "Sumatra" = suml0,
+      "Western New Guinea" = wngl0
+    )
+    
+    ut = switch(
+      grp, 
+      "Borneo" = boru0,
+      "Java" = jawu0,
+      "Maluku" = malu0,
+      "Lesser Sunda Islands" = ntu0,
+      "Sulawesi" = sulu0,
+      "Sumatra" = sumu0,
+      "Western New Guinea" = wngu0
+    )
+    
+  } else {
+    et = switch(
+      grp, 
+      "Borneo" = bore1,
+      "Java" = jawe1,
+      "Maluku" = male1,
+      "Lesser Sunda Islands" = nte1,
+      "Sulawesi" = sule1,
+      "Sumatra" = sume1,
+      "Western New Guinea" = wnge1
+    )
+    
+    lt = switch(
+      grp, 
+      "Borneo" = borl1,
+      "Java" = jawl1,
+      "Maluku" = mall1,
+      "Lesser Sunda Islands" = ntl1,
+      "Sulawesi" = sull1,
+      "Sumatra" = suml1,
+      "Western New Guinea" = wngl1
+    )
+    
+    ut = switch(
+      grp, 
+      "Borneo" = boru1,
+      "Java" = jawu1,
+      "Maluku" = malu1,
+      "Lesser Sunda Islands" = ntu1,
+      "Sulawesi" = sulu1,
+      "Sumatra" = sumu1,
+      "Western New Guinea" = wngu1
+    )
+  }
+  
+  ule = data.frame(cbind(lt[, c(1, cop)], ut[, cop], et[, cop], deparse.level = 0))
+  setnames(ule, new = c("T", "Lower Prob.", "Upper Prob.", "Differences"))
+  ule[ule[, 1] %in% thres, ]
+}
+
+ui <- fluidPage(
+  theme = shinytheme("journal"),
+  titlePanel("Forest Fire Prediction with NPI"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        "d",
+        "Dataset:",
+        c("Malaysia (2020)", "Indonesia (2020)", "Indonesia (2021)"),
+        "Malaysia (2020)"
+      ),
+      conditionalPanel(
+        condition = "input.d == 'Indonesia (2020)'", 
+        selectInput(
+          "g",
+          "Archipelago",
+          c("Borneo", "Java", "Maluku", "Lesser Sunda Islands", "Sulawesi", 
+            "Sumatra", "Western New Guinea"),
+          "Java"
+        )
+      ),
+      conditionalPanel(
+        condition = "input.d == 'Indonesia (2021)'",
+        selectInput(
+          "g",
+          "Archipelago",
+          c("Borneo", "Java", "Maluku", "Lesser Sunda Islands", "Sulawesi", 
+            "Sumatra", "Western New Guinea"),
+          "Java"
+        )
+      ),
+      numericInput(
+        "y",
+        "Latitude (°N) :",
+        min = -13, max = 8, value = 3.1390, step = 0.0001
+      ),
+      numericInput(
+        "x",
+        "Longitude (°E) :",
+        min = 94, max = 141, value = 101.6869, step = 0.0001
+      ),
+      selectInput(
+        "c",
+        "Copula",
+        c("Normal/Gaussian",
+          "Clayton",
+          "Frank",
+          "Gumbel"),
+        "Normal/Gaussian"
+      )
+    ),
+    mainPanel(
+      textOutput("t"),
+      leafletOutput("m"), 
+      textOutput("p"),
+      tableOutput("tab")
+    )
+  )
+)
+
+server <- function(input, output) {
+  output$t <- renderText({
+    paste("Threshold for the selected coordinate:", input$x + input$y)
+  })
+  
+  output$m = renderLeaflet({
+    cop = switch(
+      input$c,
+      "Normal/Gaussian" = 2,
+      "Clayton" = 3,
+      "Frank" = 5,
+      "Gumbel" = 4
+    )
+    mp(input$d, input$g, input$x, input$y, cop)
+  })
+  
+  output$p = renderText({
+    cop = switch(
+      input$c,
+      "Normal/Gaussian" = 1,
+      "Clayton" = 2,
+      "Frank" = 4,
+      "Gumbel" = 3
+    )
+    pv(input$d, input$g, input$c, cop)
+  })
+  
+  output$tab = renderTable({
+    cop = switch(
+      input$c,
+      "Normal/Gaussian" = 2,
+      "Clayton" = 3,
+      "Frank" =5,
+      "Gumbel" = 4
+    )
+    
+    format(round(ct(input$d, input$g, cop, input$x + input$y), 10))
+  })
+}
+
+shinyApp(ui = ui, server = server, options = list(height = 700))
+
+```
